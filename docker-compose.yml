@@ -1,0 +1,63 @@
+version: '3.9'
+
+# Network for Wordpress
+networks:
+  web_network:
+    name: wp_networks
+    driver: bridge
+
+services:
+
+  #Database service for wordpress
+  mysql_db:
+    image: mysql:5.7
+    container_name: mysql_container
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    restart: always
+    ports:
+      - "3360:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: P@ssw0rd
+      MYSQL_DATABASE: wordpress_db
+      MYSQL_USER: wordpress_user
+      MYSQL_PASSWORD: P@ssw0rd
+    networks:
+      - web_network
+
+  wordpress:
+    depends_on:
+      - mysql_db
+    image: wordpress
+    container_name: wordpress_container
+    volumes:
+      - "./wordpress:/var/www/html"
+    restart: always
+    ports:
+      - "8000:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql_db:3306
+      WORDPRESS_DB_USER: wordpress_user
+      WORDPRESS_DB_PASSWORD: P@ssw0rd
+      WORDPRESS_DB_NAME: wordpress_db
+    networks:
+      - web_network
+
+  #phpMyAdmin (MySQL managment)
+  phpmyadmin:
+    image: phpmyadmin:5.1.0-apache
+    depends_on:
+      - mysql_db
+    container_name: phpmyadmin_container
+    environment:
+      PMA_HOST: mysql_db
+      PMA_PORT: 3306
+      #PMA_USER: admin
+      #PMA_PASSWORD: 1234
+      PMA_ARBITRARY : 1
+    ports:
+      - 8100:80
+    restart: always
+    tty: true
+    networks:
+      - web_network
